@@ -1,0 +1,290 @@
+
+Read("spacegroup_tools.txt");
+
+AllSpaceGroupsWithGivenPointGroup := function(mat_gens, find_equiv_vec_systems)
+
+	# This function takes as input the generators of a point group written as GL(n,Z)
+	# matrices. If one has the generators as O(n) matrices, they must be converted first.
+	# The output is a list whose elements are the generators of a space group whose point
+	# group is the given point group. This list contains all possible space groups.
+	# This function follows the algorithm outlined in the paper
+	# "An Algorithm for the Determination of Space Groups" by Harold Brown (1968)
+	# and we will sometimes use terminology and results from this paper without 
+	# explanation.
+	#
+	# If find_equiv_vec_systems = true, the algorithm will find a representative of each
+	# affine equivalence class of space groups. If it is false, then it only finds them 
+	# up to strong equivalence, so that there could be some degeneracy.
+
+	
+	local mat_group, isom_to_fpgrp, fpgrp, n, k, fp_gens, fp_rels, matgrp_rels,
+			A, row_ind, rel_ind, rel, A_row, col_ind, DiagA, Q, strong_equiv_vecs,
+			Ngens, M, Mx, x, gen_mat, word, word_with_mats, Mx_row, Mx_row_elem, gen,
+			elem, Mat, elem_ind, translation_coeff, diagonal, nonzero_diagonal, perms,
+			positions, vec, vecnew, vecnewmod, orbits, equiv_vecs, orbit, spacegroup_gens,
+			trans, StrongEquivVectorSystems, i, MQ, matx;
+	
+	# Simple error catching
+	if ForAny(mat_gens, x -> not DimensionsMat(x)[1] = DimensionsMat(x)[2]) then
+	
+		return "Matrix generators are not square";
+		
+	elif not IsFinite(Group(mat_gens)) then
+	
+		return "Matrix group is not finite";
+		
+	else
+	
+		# Preliminary variable definitions
+		
+		mat_group := Group(mat_gens);;
+		isom_to_fpgrp := IsomorphismFpGroupByGenerators(mat_group, mat_gens);;
+		fpgrp := Range(isom_to_fpgrp);;
+
+		n := DimensionsMat(mat_gens[1])[1];; 
+		k := Length(mat_gens);;
+		
+		fp_gens := GeneratorsOfGroup(fpgrp);;
+		
+		# The relations of the finitely presented point group, written in a list form
+		# so that e.g. the relation g*h*k^2*h^-1 = 1 is stored as [g,h,k,k,h^-1]
+		fp_rels := RelationsAsLists(fpgrp);; 
+		
+		# The same list as above but with each generator of the fp group replaced by the
+		# corresponding matrix in the point group
+		matgrp_rels := List(fp_rels, i -> List(i, j -> 
+								InverseGeneralMapping(isom_to_fpgrp)(j)));;
+
+
+		#####################
+		# Step 1 of algorithm:
+		# Here we create the 'relation matrix' A associated to the presentation of the
+		# point group given by fp_gens and fp_rels. 
+		#
+		# This is a block matrix with as many rows as there are relations and as many
+		# columns as there are generators. Each block is n by n.
+		#
+		# A is such that t_Rj = \sum_i A(j,i) t_gi, where gi is the i-th generator, Rj
+		# is the j-th relation, A(j,i) is the (j,i)-th block of A and t_x is a length n
+		# vector which is the translation associated to the element of the point group x.
+		#
+		# The set {t_gi} is a consistent set of translations (aka a vector system) for the
+		# point group if for each j, t_Rj = 0 (mod Z^n).
+		#####################
+		
+										
+		A := NullMat(Length(fp_rels) * n , k * n);;
+
+		row_ind := 0;;
+		# The outer loop creates each row of A (one row of nxn mats for each relation)
+		for rel_ind in [1..Length(fp_rels)] do;
+		
+			rel := fp_rels[rel_ind];;
+			A_row := NullMat(n, k * n);;
+			
+			for col_ind in [1..k] do;
+			
+				gen := fp_gens[col_ind];;
+				A_row_elem := [];;
+				translation_coeff := IdentityMat(n);;
+				
+				# This builds each n by n block, A(rel_ind,col_ind), by using the rules
+				# t_fg = t_f + f*t_g and t_(g^-1) = -g^-1 * t_g
+				for elem_ind in [1..Length(rel)] do;
+				
+					elem := rel[elem_ind];;
+					Mat := matgrp_rels[rel_ind][elem_ind];;
+					
+					if elem = gen then;
+						Add(A_row_elem, translation_coeff);
+					elif elem = gen^-1 then;
+						Add(A_row_elem, -translation_coeff*Mat);	
+					else
+						Add(A_row_elem, NullMat(n,n));	
+					fi;
+					
+					translation_coeff := translation_coeff*Mat;;
+				od;
+				
+				A_row_elem := Sum(A_row_elem);
+				A_row{[1..n]}{[1 + n*(col_ind-1) .. n + n*(col_ind-1)]} := A_row_elem;;
+			od;
+			
+			A{[1 + n*row_ind .. n + n*row_ind]}{[1..n * k]} := A_row;;
+			row_ind := row_ind + 1;;
+		od;
+
+
+		#####################
+		# Step 2 of algorithm:
+		# Here we find all the vector systems for the point group by solving the equation
+		# A*t = 0 (mod Z^n) where t is a vector of length n*k. This is made possible by
+		# first diagonalising A using two GL(n,Z) matrices P and Q such that 
+		# DiagA = P * A * Q. DiagA is known as the 'Smith normal form'.
+		#
+		# We then reduce the list of vector systems up to strong equivalence, where two
+		# vector systems t = {t_g} and s = {s_g} iff there exists a vector k such that
+		# t_g = s_g + (I_n - g)k for all g in the point group. This amounts to a shift
+		# of the origin of coordinates.
+		# 
+		# In practice, these two steps are done in one. Let DiagA = diag(d1,d2,...,dq).
+		# The representatives of the strongly equivalent vector systems are given by 
+		# the d1*d2*...*dq vectors (t1/d1, t2/d2, ... , tq/dq, 0, ... , 0) where each
+		# ti is an integer and the vectors are read modulo Z^n.
+		#####################
+		
+		DiagA := SmithNormalFormIntegerMatTransforms(A).normal;;
+		Q := SmithNormalFormIntegerMatTransforms(A).coltrans;;	
+	
+		
+		#This function outputs a representative 
+		StrongEquivVectorSystems := function(diagmat)
+		
+			local all_vec_systems, diagonal, nonzero_diagonal, list_of_ranges, i, 
+					possible_numerators, nums, newnums, row, j;
+			
+			all_vec_systems := [];
+			diagonal := DiagonalOfMat(diagmat);
+			nonzero_diagonal := Filtered(diagonal, elem -> not elem = 0);
+			
+			# Generate the possible lists {t1, t2, ..., tq}
+			list_of_ranges := [];
+			for i in [1..Length(nonzero_diagonal)] do;
+				Add(list_of_ranges, [0..nonzero_diagonal[i]-1]);
+			od;
+			
+			possible_numerators := Cartesian(list_of_ranges);
+			
+			# Add on the zeroes to the end of these lists, if there are any.
+			for nums in possible_numerators do;
+				Append(nums, NullMat(1, Length(diagonal)-Length(nonzero_diagonal))[1]);
+			od;
+			
+			# Divide each ti by di
+			for newnums in possible_numerators do;
+				row := [];
+				for j in [1..Length(newnums)] do;
+					if not newnums[j] = 0 then;
+						Add(row, newnums[j]/nonzero_diagonal[j]);
+					else
+						Add(row, 0);
+					fi;
+				od;
+				Add(all_vec_systems, row);
+			od;
+			return all_vec_systems;
+		end;	
+	
+		strong_equiv_vecs :=  StrongEquivVectorSystems(DiagA);;
+
+	
+		if find_equiv_vec_systems then
+		
+			#####################
+			# Step 3 of algorithm:
+			# Here we reduce the strongly equivalent vector systems and find representatives
+			# up to equivalence of vector systems. To do that one must compute the
+			# normaliser of the point group in GL(n,Z), which can prove costly.
+			#
+			# Once this is done, one can use a similar algorithm to that used to find
+			# the relation matrix to find a matrix Mx for each generator of the 
+			# normaliser. Each Mx acts as a permutation on the set of representatives 
+			# of strong equivalence classes. One then finds representatives of the orbits
+			# under this set of permutations and this is the answer.
+			#####################
+			
+			Ngens := GeneratorsOfGroup(NormalizerInGLnZ(Group(mat_gens)));; 
+
+			M := [];;
+
+			for x in Ngens do
+				Mx := NullMat(k * n , k * n);;
+				row_ind := 0;;
+				
+				for i in [1..k] do #the rows of Mx
+					gen_mat := mat_gens[i];;
+					word := WordAsList(fpgrp, isom_to_fpgrp((gen_mat ^ x)));
+					word_with_mats := List(word, i -> 
+										InverseGeneralMapping(isom_to_fpgrp)(i));;
+					Mx_row := NullMat(n, n*k);;
+					
+					for col_ind in [1..k] do #the columns of Mx
+						gen := fp_gens[col_ind];;
+						Mx_row_elem := [];;
+						translation_coeff := IdentityMat(n);;
+						
+						for elem_ind in [1..Length(word)] do
+							elem := word[elem_ind];;
+							Mat := word_with_mats[elem_ind];;
+						
+							if elem = gen then;
+								Add(Mx_row_elem, translation_coeff);
+							elif elem = gen^-1 then;
+								Add(Mx_row_elem, -translation_coeff*Mat);
+							else
+								Add(Mx_row_elem, NullMat(n,n));
+							fi;
+							
+							translation_coeff := translation_coeff*Mat;;
+						od;
+						Mx_row_elem := Sum(Mx_row_elem);
+						Mx_row{[1..n]}{[1 + n*(col_ind-1)..n + n*(col_ind-1)]} := 
+									x*Mx_row_elem;;
+					od;
+					Mx{[1 + n*row_ind..n + n*row_ind]}{[1..n*k]} := Mx_row;;
+					row_ind := row_ind + 1;;
+				od;
+				Add(M, Mx);
+			od;
+
+			MQ := List(M, i -> Inverse(Q) * i * Q);;
+
+			diagonal := DiagonalOfMat(DiagA);
+			nonzero_diagonal := Filtered(diagonal, elem -> not elem = 0);
+			perms := [];;
+
+			for matx in MQ do;
+				positions := [];;
+				for vec in strong_equiv_vecs do
+					vecnew := matx * vec;;
+					vecnewmod := [];
+					for i in [1..Length(nonzero_diagonal)] do
+						Add(vecnewmod, (vecnew[i] * nonzero_diagonal[i] 
+							mod nonzero_diagonal[i]) / nonzero_diagonal[i]);;
+					od;
+					
+					Append(vecnewmod, NullMat(1, Length(diagonal) - 
+							Length(nonzero_diagonal))[1]);
+					
+					Add(positions, Position(strong_equiv_vecs, vecnewmod));
+				od;
+				Add(perms, PermList(positions));
+			od;
+
+			orbits :=  OrbitsPerms(perms, [1..Length(strong_equiv_vecs)]);;
+
+			equiv_vecs := [];;
+			for orbit in orbits do
+				Add(equiv_vecs, strong_equiv_vecs[orbit[1]]);
+			od;
+			
+			spacegroup_gens := [];;
+			for trans in equiv_vecs do
+				Add(spacegroup_gens, 
+					SpaceGroupGeneratorsStandardForm(mat_gens, Q*trans));
+			od;
+			
+			return spacegroup_gens;
+			
+		else
+			
+			spacegroup_gens := [];;
+			for trans in strong_equiv_vecs do
+				Add(spacegroup_gens,
+					SpaceGroupGeneratorsStandardForm(mat_gens, Q*trans));
+			od;
+			
+			return spacegroup_gens;
+		fi;
+	fi;
+end;

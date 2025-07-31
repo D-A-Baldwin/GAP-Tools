@@ -1,0 +1,83 @@
+
+##############
+# A collection of useful tools that are used in some more complicated functions associated
+# to working with space groups
+##############
+
+RelationsAsLists := function(fpgrp)
+	
+	# This takes as input a finitely presented group, fpgrp, and outputs the relations 
+	# of fpgrp written in a list form so that e.g. the relation g*h*k^2*h^-1 = 1 
+	# is stored as [g,h,k,k,h^-1]
+
+	local rels, newrels, word;
+	
+	rels := RelatorsOfFpGroup(fpgrp);
+	newrels := [];
+	
+	for word in rels do;
+		Add(newrels,List(List([1..Length(UnderlyingElement(word))], 
+			i -> Subword(UnderlyingElement(word),i,i)),
+			i -> ElementOfFpGroup(FamilyObj(fpgrp.1),i)));
+	od;
+	return newrels;
+end;
+
+
+WordAsList := function(fpgrp, word)
+	local newword;
+	
+	# This takes as input a finitely presented group, fpgrp, and a word written in the
+	# generators of fpgrp and outputs the word as a list, similarly to RelationsAsLists.
+	
+	newword := List(List([1..Length(UnderlyingElement(word))], 
+			i -> Subword(UnderlyingElement(word),i,i)),
+			i -> ElementOfFpGroup(FamilyObj(fpgrp.1),i));
+	return newword;
+end;
+
+
+SpaceGroupGeneratorsStandardForm := function(mat_gens, translations)
+
+	# This takes as input the list generators of a point group (a list n by n matrices 
+	# of length k) and a vector system for the point group (a vector of length k*n) 
+	# and outputs a list of generators for the space group in 'standard form'. 
+	# This means that a generator, g, and its corresponding translation, t, are written as an 
+	# (n+1) by (n+1) matrix [[g,t],[0,1]] where g is n by n, t is n by 1 and the last row
+	# contains n zeroes and a single 1.
+
+	local dim, last_row, lattice_mat_list, i, lattice_mat, lattice_trans, genslist,
+			gen, translation;
+	
+	dim := DimensionsMat(mat_gens[1])[1];
+	
+	last_row := NullMat(1,dim)[1];
+	Add(last_row,1);
+	
+	lattice_mat_list := [];;
+	for i in [1..dim] do
+		lattice_mat := IdentityMat(n);
+		lattice_trans := NullMat(1,dim)[1];
+		lattice_trans[i] := 1;
+		
+		Add(lattice_mat,lattice_trans);
+		lattice_mat := TransposedMatMutable(lattice_mat);
+		Add(lattice_mat, last_row);
+		Add(lattice_mat_list, lattice_mat);
+	od;
+	
+	genslist := [];;
+
+	for i in [1..Length(mat_gens)] do
+		gen := ShallowCopy(mat_gens[i]);
+		translation := translations{[1+dim*(i-1)..dim+dim*(i-1)]};
+		
+		Add(gen,translation);
+		gen := TransposedMatMutable(gen);
+		Add(gen, last_row);
+		Add(genslist, gen);
+	od;
+	
+	Append(genslist, lattice_mat_list);
+	return genslist;
+end;
