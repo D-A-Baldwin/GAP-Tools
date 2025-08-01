@@ -1,8 +1,11 @@
 
 InteriorProduct := function(vec_insert, n_form)
-	#n_form will be a list of components of the form [n, [i,j,k,...]] which stands for
-	# n dx^{ijk...} where i, j, k range from 1 to k and dx^{ijk...} means dx^i \wedge dx^j...
-	#vec_insert will be a number from 1 to k.
+	# This function takes as inputs a basis vector and a constant differential form on R^m
+	# and computed the interior product.
+	# n_form will be a list of components of the form [r, [i,j,k,...]] which stands for
+	# r * dx^{ijk...} where i, j, k,... range from 1 to m and dx^{ijk...} means dx^i \wedge dx^j...
+	# vec_insert will be a number p from 1 to m representing the p-th basis vector.
+	# The output is a differential form in the same format as n_form of degree n-1.
 	
 	local n_form_new, comp, pos_vec, new_indices;
 	
@@ -30,8 +33,12 @@ InteriorProduct := function(vec_insert, n_form)
 end;
 
 WedgeProduct := function(n_form, m_form)
-	#n_form will be a list of components of the form [n, [i,j,k,...]] which stands for
-	# n dx^{ijk...} where i, j, k range from 1 to k and dx^{ijk...} means dx^i \wedge dx^j...
+	# This function takes two constant differential forms on R^m and computes their wedge
+	# product.
+	# n_form will be a list of components of the form [r, [i,j,k,...]] which stands for
+	# r dx^{ijk...} where i, j, k,... range from 1 to m and dx^{ijk...} means dx^i \wedge dx^j...
+	# and similarly for m_form. 
+	# The output is a differential form in the same format as n_form and m_form of degree n+m
 
 	local n_plus_m_form, comp_n, comp_m, new_indices, unique_indices, n_plus_m_form_reduced, 
 			pos_ind, coeffs, new_indices_sorted, sign;
@@ -71,6 +78,12 @@ end;
 	
 	
 G2_3form_metric := function(phi)
+	# This function takes as input a constant 3-form phi on R^7 which is a list of components of 
+	# the form [r, [i,j,k]] which stands for r * dx^{ijk} where i, j, k range 
+	# from 1 to 7 and dx^{ijk} means dx^i \wedge dx^j \wedge dx^k.
+	# It then computes the standard metric associated to the 3-form using the formula
+	# g(u,v) vol = (1/6) * i_u phi \wedge i_v phi \wedge \phi.
+
 	local metric, i, metric_row, j, int_phi1, int_phi2, component;
 	
 	metric := [];;
