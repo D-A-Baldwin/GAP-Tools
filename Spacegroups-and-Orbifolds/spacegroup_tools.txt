@@ -56,7 +56,7 @@ SpaceGroupGeneratorsStandardForm := function(mat_gens, translations)
 	
 	lattice_mat_list := [];;
 	for i in [1..dim] do
-		lattice_mat := IdentityMat(n);
+		lattice_mat := IdentityMat(dim);
 		lattice_trans := NullMat(1,dim)[1];
 		lattice_trans[i] := 1;
 		
