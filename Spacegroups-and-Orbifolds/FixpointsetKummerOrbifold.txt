@@ -1,0 +1,58 @@
+
+FixpointsetKummerOrbifold := function(spacegroup_gens)
+	# This function requires the CRYST package.
+	# This function takes as its inputs the generators of a space group in standard form
+	# This means that a generator, g, and its corresponding translation, t, are written as an 
+	# (n+1) by (n+1) matrix [[g,t],[0,1]] where g is n by n, t is n by 1 and the last row
+	# contains n zeroes and a single 1.
+	# The output is the fixed point set of R^n quotiented by the action of the space group.
+	# The format of the output is a list of components of the fixed point set, each
+	# of the form 
+	# [ [ Group_ID ], [ Generators_of_subgroup ], "number of fixpoints", "Codimension"]
+
+	local spacegroup, dim, pointgroup_gens, Wpositions, wpos, stab_grps_list, 
+			points_and_stabs, stab_grp, stab_grp_pts, codim_str;
+	
+	spacegroup := AffineCrystGroupOnLeft(spacegroup_gens);;
+	
+	dim := DimensionsMat(spacegroup_gens[1])[1] - 1;;
+	
+	pointgroup_gens := List(spacegroup_gens, i -> i{[1..dim]}{[1..dim]});;
+	pointgroup_gens := Filtered(pointgroup_gens, i -> not i = IdentityMat(dim));;
+	
+	# WyckoffPositions contains all the info on the fixedpoint set, the rest of the
+	# function just puts this in a readable format.
+	Wpositions := WyckoffPositions(spacegroup);
+	
+	# Gather all the subgroups of the point group that fix some points (except the
+	# trivial group).
+	stab_grps_list := [];
+	for wpos in Wpositions do
+		Add(stab_grps_list, PointGroup(WyckoffStabilizer(wpos)));
+	od;
+	stab_grps_list := DuplicateFreeList(stab_grps_list);
+	stab_grps_list := Filtered(stab_grps_list, spacegroup -> not Size(spacegroup) = 1);
+	
+
+	points_and_stabs := [];
+	for stab_grp in stab_grps_list do
+		stab_grp_pts := [];
+		for wpos in Wpositions do
+			if PointGroup(WyckoffStabilizer(wpos)) = stab_grp then
+				Add(stab_grp_pts, List(WyckoffOrbit(wpos), WyckoffTranslation));
+				codim_str := Concatenation("Codimension ", String(dim - Length(WyckoffBasis(wpos))));
+			fi;
+		od;
+		if Size(stab_grp)<2001 then 
+			Add(points_and_stabs, [IdGroup(stab_grp), List(List(GeneratorsOfGroup(stab_grp), 
+				gen -> IsomorphismFpGroupByGenerators(PointGroup(spacegroup), pointgroup_gens)(gen)), i -> String(i)), 
+				Concatenation(String(Length(stab_grp_pts)), " fixpoints"), codim_str]);
+		else
+			Add(points_and_stabs, [[Size(stab_grp),"no ID"], List(List(GeneratorsOfGroup(stab_grp), 
+				gen -> IsomorphismFpGroupByGenerators(PointGroup(spacegroup), pointgroup_gens)(gen)), i -> String(i)), 
+				Concatenation(String(Length(stab_grp_pts)), " fixpoints"), codim_str]);
+		fi;
+	od;
+	return points_and_stabs;
+end; 
+
