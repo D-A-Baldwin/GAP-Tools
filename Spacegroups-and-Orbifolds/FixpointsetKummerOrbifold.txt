@@ -8,7 +8,8 @@ FixpointsetKummerOrbifold := function(spacegroup_gens)
 	# The output is the fixed point set of R^n quotiented by the action of the space group.
 	# The format of the output is a list of components of the fixed point set, each
 	# of the form 
-	# [ [ Group_ID ], [ Generators_of_subgroup ], "number of fixpoints", "Codimension"]
+	# [ [ Group_ID_of_stabliser ], [ Generators_of_stabiliser ], 
+	# 	"number of components", "Codimension of each component"]
 
 	local spacegroup, dim, pointgroup_gens, Wpositions, wpos, stab_grps_list, 
 			points_and_stabs, stab_grp, stab_grp_pts, codim_str;
