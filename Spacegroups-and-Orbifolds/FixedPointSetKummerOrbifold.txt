@@ -1,5 +1,5 @@
 
-FixpointsetKummerOrbifold := function(spacegroup_gens)
+FixedPointSetKummerOrbifold := function(spacegroup_gens)
 	# This function requires the CRYST package.
 	# This function takes as its inputs the generators of a space group in standard form
 	# This means that a generator, g, and its corresponding translation, t, are written as an 
