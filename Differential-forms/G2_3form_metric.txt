@@ -1,0 +1,32 @@
+
+
+G2_3form_metric := function(phi)
+	# This function takes as input a constant 3-form phi on R^7 which is a list of components of 
+	# the form [r, [i,j,k]] which stands for r * dx^{ijk} where i, j, k range 
+	# from 1 to 7 and dx^{ijk} means dx^i \wedge dx^j \wedge dx^k.
+	# It then computes the standard metric associated to the 3-form using the formula
+	# g(u,v) vol = (1/6) * i_u phi \wedge i_v phi \wedge \phi.
+
+	local metric, i, metric_row, j, int_phi1, int_phi2, component;
+	
+	metric := [];;
+	
+	for i in [1..7] do
+		metric_row := [];;
+		for j in [1..7] do
+			int_phi1 := InteriorProduct(i, phi);;
+			int_phi2 := InteriorProduct(j, phi);;
+			
+			component := WedgeProduct(WedgeProduct(int_phi1, int_phi2), phi);
+			if component = [] then
+				Add(metric_row, 0);;
+			else
+				Add(metric_row, component[1][1]);;
+			fi;
+		od;
+		Add(metric, metric_row);;
+	od;
+	
+	return (1/6)*metric;
+end;
+
