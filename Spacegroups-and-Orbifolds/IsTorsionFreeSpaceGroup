@@ -2,22 +2,20 @@ Read("spacegroup_tools.txt");
 
 
 IsTorsionFreeSpaceGroup := function(spacegroup_gens)
-  # This takes as its input the generators of some spacegroup written in the standard form
-  # This means that a generator, g, and its corresponding translation, t, are written as an 
+	# This takes as its input the generators of some spacegroup written in the standard form
+	# This means that a generator, g, and its corresponding translation, t, are written as an 
 	# (n+1) by (n+1) matrix [[g,t],[0,1]] where g is n by n, t is n by 1 and the last row
 	# contains n zeroes and a single 1.
-  # The output is true if the action of this spacegroup on R^n has no fixed points and 
-  # false otherwise.
+	# The output is true if the action of this spacegroup on R^n has no fixed points and 
+	# false otherwise.
 
-	local gens_spacegroup, n, gens_group, gen, genslength, transvec, i, trans_elems, elems, identity_pos,
+	local n, gens_group, gen, genslength, transvec, i, trans_elems, elems, identity_pos,
 	fixpts;
 	
-	gens_spacegroup := GeneratorsOfGroup(spacegroup);
-	
-	n := Length(gens_spacegroup[1]);
+	n := Length(spacegroup_gens[1]);
 	
 	gens_group := [];
-	for gen in gens_spacegroup do
+	for gen in spacegroup_gens do
 		Add(gens_group, gen{[1..n-1]}{[1..n-1]});
 	od;
 	
@@ -28,7 +26,7 @@ IsTorsionFreeSpaceGroup := function(spacegroup_gens)
 	transvec := [];
 	
 	for i in [1..genslength] do
-		Append(transvec, TransposedMat(gens_spacegroup[i])[n]{[1..n-1]});
+		Append(transvec, TransposedMat(spacegroup_gens[i])[n]{[1..n-1]});
 	od;
 	
 	elems := SpaceGroupTranslationsForAllElems(gens_group, transvec)[1];;
