@@ -31,9 +31,9 @@ IsTorsionFreeSpaceGroup := function(spacegroup_gens)
 		Append(transvec, TransposedMat(gens_spacegroup[i])[n]{[1..n-1]});
 	od;
 	
-	elems := SpaceGroupTranslationsForAllElems(gens_group, transvec, n-1)[1];;
+	elems := SpaceGroupTranslationsForAllElems(gens_group, transvec)[1];;
 	
-	trans_elems := SpaceGroupTranslationsForAllElems(gens_group, transvec, n-1)[2];;
+	trans_elems := SpaceGroupTranslationsForAllElems(gens_group, transvec)[2];;
 	
 	identity_pos := Position(elems, One(Group(gens_group)));;
 	
