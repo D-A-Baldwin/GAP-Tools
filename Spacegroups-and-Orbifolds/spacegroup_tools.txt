@@ -165,7 +165,8 @@ FixedPointsOfElement := function(elem, trans)
 end;
 
 
-SpaceGroupTranslationsForAllElems := function(mat_gens, transvec, dim)
+
+SpaceGroupTranslationsForAllElems := function(mat_gens, transvec)
 	# Note: this function requires the function WordAsList.
 	# This function takes as its input the list of generators of a point group and
 	# the translations associated to those generators in the space group.
@@ -181,7 +182,7 @@ SpaceGroupTranslationsForAllElems := function(mat_gens, transvec, dim)
 			genslistnew_w_inv, positions_list, elems_w_translations, translations_of_elems, mat, vec,
 			elems;
 
-
+	dim := Length(mat_gens[1]);;
 	point_group := Group(mat_gens);;
 	iso_fp := IsomorphismFpGroupByGenerators(point_group, mat_gens);;
 
@@ -227,3 +228,5 @@ SpaceGroupTranslationsForAllElems := function(mat_gens, transvec, dim)
 	
 	return [elems, translations_of_elems];
 end;
+
+
