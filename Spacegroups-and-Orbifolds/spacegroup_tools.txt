@@ -81,3 +81,18 @@ SpaceGroupGeneratorsStandardForm := function(mat_gens, translations)
 	Append(genslist, lattice_mat_list);
 	return genslist;
 end;
+
+
+# The following two functions are useful as they allow one to compute m mod n where
+# m is rational. This is not possible with GAP's standard function.
+
+modulofunc := function(m,n)
+	local denom, sol;
+	denom := DenominatorRat(m);
+	sol := (denom*m) mod (n*denom);
+	return sol/denom;
+end;
+
+modulofunclist := function(mlist, n)
+	return List(mlist, i -> modulofunc(i,n));
+end;
