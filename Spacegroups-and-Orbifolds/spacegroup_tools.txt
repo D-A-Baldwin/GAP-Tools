@@ -163,3 +163,67 @@ FixedPointsOfElement := function(elem, trans)
 		return [fixed_pts_of_elem, basis_of_inv_subspace];
 	fi;
 end;
+
+
+SpaceGroupTranslationsForAllElems := function(mat_gens, transvec, dim)
+	# Note: this function requires the function WordAsList.
+	# This function takes as its input the list of generators of a point group and
+	# the translations associated to those generators in the space group.
+	# mat_gens is a list of k GL(n,Z) matrices and transvec is a vector n*k containing
+	# all the translations concatenated.
+	# This function is useful as you can find the translation associated to any element 
+	# of the point group, not only the generators.
+	# The output is [elems, translations_of_elems]. elems is the list of all elements
+	# of the point group and translations_of_elems is a list of the same Length
+	# containing the corresponding translations.
+	
+	local point_group, iso_fp, elems_fp, mat_gens_copy, i, gennew, translation, j, row, matgenssq_w_inv,
+			genslistnew_w_inv, positions_list, elems_w_translations, translations_of_elems, mat, vec,
+			elems;
+
+
+	point_group := Group(mat_gens);;
+	iso_fp := IsomorphismFpGroupByGenerators(point_group, mat_gens);;
+
+	elems := SortedList(Elements(point_group));;
+	
+	elems_fp := List(List(elems, iso_fp), i -> WordAsList(Range(iso_fp), i));
+		
+	mat_gens_copy := List(mat_gens, i -> List(i,ShallowCopy));
+
+	for i in [1..Length(mat_gens_copy)] do
+		gennew := mat_gens_copy[i];;
+		translation := transvec{[1+dim*(i-1)..dim+dim*(i-1)]};;
+		for j in [1..Length(gennew)] do
+			row := gennew[j];;
+			Add(row, translation[j]);
+		od;
+		vec := NullMat(1,dim)[1];
+		Add(vec,1);
+		Add(gennew, vec);
+	od;
+
+	matgenssq_w_inv := ShallowCopy(mat_gens);;
+	Append(matgenssq_w_inv, List(mat_gens, Inverse));
+	genslistnew_w_inv := ShallowCopy(mat_gens_copy);;
+	Append(genslistnew_w_inv, List(mat_gens_copy, Inverse));
+
+
+	positions_list := List(elems_fp, i -> List(i, j -> Position(matgenssq_w_inv, 
+							InverseGeneralMapping(iso_fp)(j))));;
+
+	elems_w_translations := List(List(positions_list, i -> genslistnew_w_inv{i}), Product);
+
+	for i in [1..Length(elems_w_translations)] do;
+		if elems_w_translations[i] = 1 then
+			elems_w_translations[i]:=IdentityMat(Length(One(point_group))+1);
+		fi;
+	od;
+
+	translations_of_elems := [];
+	for mat in elems_w_translations do
+		Add(translations_of_elems, modulofunclist(Last(TransposedMat(mat)){[1..Length(One(point_group))]},1));
+	od;
+	
+	return [elems, translations_of_elems];
+end;
