@@ -96,3 +96,70 @@ end;
 modulofunclist := function(mlist, n)
 	return List(mlist, i -> modulofunc(i,n));
 end;
+
+
+FixedPointsOfElement := function(elem, trans)
+	# This function takes as its input a finite order GL(n,Z) matrix, elem, and a length-n vector, trans, 
+	# and outputs the solutions to the equation elem*x + trans = x mod Z^n
+	# The output is formatted as [fixed_pts_of_elem, basis_of_inv_subspace] where
+	# A fixed point is any element of fixed_pts_of_elem plus arbitrary real linear 
+	# combinations of elements in basis_of_inv_subspace
+	# For example take the 3x3 example elem := [[0,1,0],[-1,0,0],[0,0,1]] and
+	# trans := [0,0,0]
+	# The output would be [ [ [ 0, 0, 0 ], [ 1/2, 1/2, 0 ] ], [ [ 0, 0, 1 ] ] ]
+	# Since any point of the form [0, 0, x] or [1/2, 1/2, x] is a solution to The
+	# above equation.
+
+	local M, DiagG, Qmat, diagonal, nonzerodiagonal, listofranges, possnumerators, i, nums,
+	 newnums, row, j, basis_of_inv_subspace, k, lst, fixed_pts_of_elem, Pmat, pt;
+	
+	M := elem-IdentityMat(Length(elem));
+	DiagG := SmithNormalFormIntegerMatTransforms(M).normal;
+	Qmat := SmithNormalFormIntegerMatTransforms(M).coltrans;
+	Pmat := SmithNormalFormIntegerMatTransforms(M).rowtrans;
+	diagonal := DiagonalOfMatrix(DiagG);
+	nonzerodiagonal := Filtered(diagonal, elem -> not elem = 0);
+	
+	pt := -Pmat*trans;
+	
+	if not Length(nonzerodiagonal) = DimensionsMat(DiagG)[1] and 
+		ForAny(pt{[Length(nonzerodiagonal)+1 .. DimensionsMat(DiagG)[1]]}, i->not modulofunc(i,1)=0) then
+		
+		return [[],[]];
+		
+	else
+		listofranges := [];
+		for i in [1..Length(nonzerodiagonal)] do;
+			Add(listofranges, [0..nonzerodiagonal[i]-1]);
+		od;
+		possnumerators := Cartesian(listofranges);
+		
+		for nums in possnumerators do;
+			Append(nums, NullMat(1, Length(diagonal)-Length(nonzerodiagonal))[1]);
+		od;
+		
+		fixed_pts_of_elem := [];
+		for newnums in possnumerators do
+			row := [];
+			for j in [1..Length(newnums)] do
+				if not diagonal[j] = 0 then;
+					Add(row, (newnums[j]/nonzerodiagonal[j])+(pt[j]/nonzerodiagonal[j]));
+				else
+					Add(row, 0);
+				fi;
+			od;
+			
+			Add(fixed_pts_of_elem, modulofunclist(Qmat*row,1));
+		od;
+		
+		fixed_pts_of_elem := DuplicateFreeList(fixed_pts_of_elem);
+		
+		basis_of_inv_subspace := [];
+		for k in [Length(nonzerodiagonal)+1 .. Length(diagonal)] do
+			lst := List([1..Length(diagonal)], i-> 0);
+			lst[k] := 1;
+			Add(basis_of_inv_subspace, Qmat*lst);
+		od;
+		return [fixed_pts_of_elem, basis_of_inv_subspace];
+	fi;
+end;
