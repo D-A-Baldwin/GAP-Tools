@@ -18,7 +18,7 @@ AllSpaceGroupsWithGivenPointGroup := function(mat_gens, find_equiv_vec_systems)
 
 	
 	local mat_group, isom_to_fpgrp, fpgrp, n, k, fp_gens, fp_rels, matgrp_rels,
-			A, row_ind, rel_ind, rel, A_row, col_ind, DiagA, Q, strong_equiv_vecs,
+			A, row_ind, rel_ind, rel, A_row, A_row_elem, col_ind, DiagA, Q, strong_equiv_vecs,
 			Ngens, M, Mx, x, gen_mat, word, word_with_mats, Mx_row, Mx_row_elem, gen,
 			elem, Mat, elem_ind, translation_coeff, diagonal, nonzero_diagonal, perms,
 			positions, vec, vecnew, vecnewmod, orbits, equiv_vecs, orbit, spacegroup_gens,
@@ -288,3 +288,4 @@ AllSpaceGroupsWithGivenPointGroup := function(mat_gens, find_equiv_vec_systems)
 		fi;
 	fi;
 end;
+
