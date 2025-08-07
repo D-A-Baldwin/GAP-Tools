@@ -3,3 +3,32 @@
 # relating to lattices.
 ###########
 
+ReflectionMatrix := function(vec, gram_mat)
+  # This returns the matrix corresponding to the reflection through vec
+  # with respect to the inner product given by gram_mat.
+  # GAP actually already has a function that does this.
+
+	local n;
+	
+	n := Length(gram_mat);
+	
+	return IdentityMat(n) -  List(vec, i-> i*(2/(vec*gram_mat*vec))*vec*gram_mat)  ;
+end;
+
+
+TransformationMatrixByFunction := function(func, n, m)
+	# Given an R-linear function, func, that takes in a length-n vector
+	# as an input and outputs a length-m vector, this function
+	# outputs the corresponding transformation mxn matrix that maps R^n -> R^m
+	# using the standard orthonormal basis for R^n.
+	
+	local M, bas_vec;
+	
+	M := [];
+	
+	for bas_vec in IdentityMat(n) do
+		Add(M, func(bas_vec));
+	od;
+	
+	return TransposedMat(M);
+end;
