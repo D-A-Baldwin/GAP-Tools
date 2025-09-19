@@ -180,7 +180,7 @@ SpaceGroupTranslationsForAllElems := function(mat_gens, transvec)
 	
 	local point_group, iso_fp, elems_fp, mat_gens_copy, i, gennew, translation, j, row, matgenssq_w_inv,
 			genslistnew_w_inv, positions_list, elems_w_translations, translations_of_elems, mat, vec,
-			elems;
+			elems, dim;
 
 	dim := Length(mat_gens[1]);;
 	point_group := Group(mat_gens);;
@@ -228,5 +228,6 @@ SpaceGroupTranslationsForAllElems := function(mat_gens, transvec)
 	
 	return [elems, translations_of_elems];
 end;
+
 
 
