@@ -1,5 +1,5 @@
 
-Read("spacegroup_tools.txt");
+Read("spacegroup_tools.g");
 
 AllSpaceGroupsWithGivenPointGroup := function(mat_gens, find_equiv_vec_systems)
 
@@ -288,4 +288,5 @@ AllSpaceGroupsWithGivenPointGroup := function(mat_gens, find_equiv_vec_systems)
 		fi;
 	fi;
 end;
+
 
