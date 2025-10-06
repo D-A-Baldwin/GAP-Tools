@@ -3,7 +3,7 @@
 # of a matrix or matrix group.
 ##########
 
-Read("Linear_tools.txt");
+Read("Linear_tools.g");
 
 InvariantFormsOfMatrix := function(M)
 	local n, i, bas_vec, SymMatBasis, off_diag_inds, ind, mat, M_SymRep, row, ind2, j, transf_SymMats,
