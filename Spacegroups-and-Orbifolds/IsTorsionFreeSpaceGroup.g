@@ -1,4 +1,4 @@
-Read("spacegroup_tools.txt");
+Read("spacegroup_tools.g");
 
 
 IsTorsionFreeSpaceGroup := function(spacegroup_gens)
