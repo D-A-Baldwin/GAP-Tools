@@ -1,4 +1,4 @@
-Read("Forms_tools.txt");
+Read("Forms_tools.g");
 
 G2_3form_metric := function(phi)
 	# This function takes as input a constant 3-form phi on R^7 which is a list of components of 
@@ -29,5 +29,6 @@ G2_3form_metric := function(phi)
 	
 	return (1/6)*metric;
 end;
+
 
 
