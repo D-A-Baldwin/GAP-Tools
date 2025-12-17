@@ -40,7 +40,7 @@ WedgeProduct := function(n_form, m_form)
 	# The output is a differential form in the same format as n_form and m_form of degree n+m
 
 	local n_plus_m_form, comp_n, comp_m, new_indices, unique_indices, n_plus_m_form_reduced, 
-			pos_ind, coeffs, new_indices_sorted, sign;
+			pos_ind, coeffs, new_indices_sorted, sign, ind;
 	
 	n_plus_m_form := [];
 	
